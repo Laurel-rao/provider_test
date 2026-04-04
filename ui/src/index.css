@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-card: #111217;
+  --color-card-foreground: #fafafa;
+  --color-popover: #111217;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #8b5cf6;
+  --color-primary-foreground: #fafafa;
+  --color-secondary: #1d2433;
+  --color-secondary-foreground: #e5e7eb;
+  --color-muted: #141925;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #1a2030;
+  --color-accent-foreground: #f8fafc;
+  --color-destructive: #ef4444;
+  --color-border: #222938;
+  --color-input: #2b3447;
+  --color-ring: #8b5cf6;
+  --color-sidebar: #0c1018;
+  --color-chart-1: #8b5cf6;
+  --color-chart-2: #06b6d4;
+  --color-chart-3: #22c55e;
+  --color-chart-4: #f59e0b;
+  --color-chart-5: #ef4444;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@keyframes status-breath {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.92);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.status-breath-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgb(239 68 68);
+  animation: status-breath 1.8s ease-out infinite;
+}

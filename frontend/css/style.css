@@ -1,0 +1,357 @@
+/* Dark theme variables */
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #0f3460;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --accent: #00b4d8;
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --warning: #f39c12;
+    --unknown: #7f8c8d;
+    --border: #2a2a4a;
+    --input-bg: #1a1a3e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background: var(--bg-secondary);
+    padding: 20px 0;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+}
+
+.sidebar-header {
+    padding: 0 20px 20px;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
+
+.nav-link {
+    display: block;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: background .2s, color .2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+/* Page title */
+.page-title {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: var(--accent);
+}
+
+/* Cards grid */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border);
+}
+
+.card-title {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+}
+
+.card-url {
+    font-size: .85em;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.card-meta {
+    margin-top: 8px;
+    font-size: .85em;
+    color: var(--text-secondary);
+}
+
+/* Status badges */
+.status {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: .8em;
+    font-weight: 600;
+}
+
+.status-normal {
+    background: var(--success);
+    color: #fff;
+}
+
+.status-abnormal {
+    background: var(--danger);
+    color: #fff;
+}
+
+.status-unknown {
+    background: var(--unknown);
+    color: #fff;
+}
+
+/* Health rate bar */
+.health-bar {
+    margin-bottom: 20px;
+}
+
+.health-bar .rate {
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.health-bar .label {
+    color: var(--text-secondary);
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+th,
+td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: .85em;
+}
+
+td {
+    font-size: .9em;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+    font-size: .9em;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: .9em;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .9em;
+    font-weight: 600;
+    transition: opacity .2s;
+}
+
+.btn:hover {
+    opacity: .85;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: #fff;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: .8em;
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Login page */
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.login-box {
+    background: var(--bg-card);
+    padding: 40px;
+    border-radius: 12px;
+    width: 360px;
+    border: 1px solid var(--border);
+}
+
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    color: var(--accent);
+}
+
+.error-msg {
+    color: var(--danger);
+    font-size: .85em;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* Filters bar */
+.filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    align-items: flex-end;
+}
+
+.filters .form-group {
+    margin-bottom: 0;
+}
+
+/* Modal / dialog */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, .6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal {
+    background: var(--bg-card);
+    padding: 24px;
+    border-radius: 8px;
+    width: 460px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+}
+
+.modal h3 {
+    margin-bottom: 16px;
+    color: var(--accent);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    align-items: center;
+}
+
+.pagination .info {
+    color: var(--text-secondary);
+    font-size: .85em;
+}
+
+/* Chart container */
+.chart-container {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+    max-height: 180px;
+}
+
+/* AI Dashboard – time range buttons */
+.ai-tr-btn {
+    padding: 5px 12px;
+    font-size: .8em;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.ai-tr-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+}
+
+.ai-tr-btn.ai-tr-active {
+    background: var(--accent);
+    color: #fff;
+}

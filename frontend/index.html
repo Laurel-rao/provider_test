@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Monitor Dashboard</title>
+  <link rel="stylesheet" href="css/style.css?v=3">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+
+<body>
+  <nav id="sidebar" class="sidebar hidden">
+    <div class="sidebar-header">API Monitor</div>
+    <a href="#/ai-dashboard" class="nav-link" data-page="ai-dashboard">AI 仪表盘</a>
+    <a href="#/ai-providers" class="nav-link" data-page="ai-providers">AI 供应商</a>
+    <a href="#/endpoints" class="nav-link" data-page="endpoints" style="display:none;">端点管理</a>
+    <a href="#/keys" class="nav-link" data-page="keys">密钥管理</a>
+    <a href="#/alerts" class="nav-link" data-page="alerts">告警管理</a>
+    <a href="#/logs" class="nav-link" data-page="logs">错误日志</a>
+    <a href="#" class="nav-link" id="logout-btn">退出登录</a>
+  </nav>
+  <main id="app" class="main-content"></main>
+  <script src="js/api.js"></script>
+  <script src="js/pages/login.js"></script>
+  <script src="js/pages/endpoints.js"></script>
+  <script src="js/pages/keys.js"></script>
+  <script src="js/pages/records.js?v=3"></script>
+  <script src="js/pages/alerts.js"></script>
+  <script src="js/pages/logs.js"></script>
+  <script src="js/pages/ai-dashboard.js?v=7"></script>
+  <script src="js/pages/ai-providers.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
+</body>
+
+</html>
