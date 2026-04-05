@@ -142,7 +142,8 @@ class HealthChecker:
                             f"got {actual_text!r}"
                         )
         except httpx.TimeoutException:
-            error_message = "Request timed out"
+            elapsed = (time.time() - start_time) * 1000
+            error_message = f"Request timed out after {elapsed:.0f}ms (configured timeout is {_DEFAULT_TIMEOUT}s)"
         except httpx.ConnectError:
             error_message = "Connection error"
         except httpx.HTTPError as exc:
