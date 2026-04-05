@@ -99,6 +99,9 @@ class HealthChecker:
                                             actual_text += content
                                 except json.JSONDecodeError:
                                     pass
+                            elif line.startswith("error: "):
+                                # try to capture stream errors if provided
+                                actual_text += line
                     except Exception as e:
                         error_message = f"Error reading stream: {e}"
                     
@@ -106,7 +109,7 @@ class HealthChecker:
                 else:
                     # Capture response body (truncate to 4KB to avoid bloating DB)
                     try:
-                        raw_text = response.text if not is_stream else await response.aread()
+                        raw_text = response.text if not is_stream else (await response.aread()).decode("utf-8", errors="ignore")
                         response_body = raw_text[:4096] if raw_text else None
                     except Exception:
                         response_body = None

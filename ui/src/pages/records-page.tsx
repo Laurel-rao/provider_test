@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,8 +29,11 @@ function prettyBody(body: string | null) {
 }
 
 export function RecordsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialEndpointId = searchParams.get('endpointId') || ''
+  
   const [endpoints, setEndpoints] = useState<ApiEndpoint[]>([])
-  const [filters, setFilters] = useState<Filters>({ endpointId: '', status: '', startTime: '', endTime: '' })
+  const [filters, setFilters] = useState<Filters>({ endpointId: initialEndpointId, status: '', startTime: '', endTime: '' })
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)
 
@@ -149,7 +153,13 @@ export function RecordsPage() {
             <select
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               value={filters.endpointId}
-              onChange={(event) => setFilters((prev) => ({ ...prev, endpointId: event.target.value }))}
+              onChange={(event) => {
+                const val = event.target.value
+                setFilters((prev) => ({ ...prev, endpointId: val }))
+                if (val) searchParams.set('endpointId', val)
+                else searchParams.delete('endpointId')
+                setSearchParams(searchParams, { replace: true })
+              }}
             >
               <option value="">全部端点</option>
               {endpoints.map((endpoint) => (

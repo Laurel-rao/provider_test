@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { api, type CheckRecord, type DashboardSummary, type ProviderProbeCard } from '@/lib/api'
 
 const timeRanges = [
@@ -24,10 +25,22 @@ const providerTypes = [
   { label: 'Custom', value: 'custom' },
 ]
 
+const providerStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '正常', value: 'normal' },
+  { label: '异常', value: 'abnormal' },
+  { label: '未知', value: 'unknown' },
+]
+
 function statusLabel(status: string | null) {
   if (status === 'normal') return '正常'
   if (status === 'abnormal') return '异常'
   return '未知'
+}
+
+function normalizeProviderStatus(status: string | null) {
+  if (status === 'normal' || status === 'abnormal') return status
+  return 'unknown'
 }
 
 function healthRateColor(healthRate: number) {
@@ -166,7 +179,11 @@ function AnimatedMetricValue({
 export function AIDashboardPage() {
   const navigate = useNavigate()
   const [providerType, setProviderType] = useState('')
+  const [providerStatus, setProviderStatus] = useState<'' | 'normal' | 'abnormal' | 'unknown'>('')
+  const [providerNameQuery, setProviderNameQuery] = useState('')
   const [hours, setHours] = useState(24)
+  const [selectedEndpointId, setSelectedEndpointId] = useState<number | null>(null)
+  const [recordStatus, setRecordStatus] = useState<'' | '200' | 'non200'>('')
   const [recordPage, setRecordPage] = useState(1)
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [cards, setCards] = useState<ProviderProbeCard[]>([])
@@ -189,7 +206,7 @@ export function AIDashboardPage() {
           provider_type: providerType || null,
           hours,
         }),
-        api.listRecords({ page: recordPage, page_size: recordPageSize }),
+        api.listRecords({ page: recordPage, page_size: recordPageSize, endpoint_id: selectedEndpointId, status: recordStatus || null }),
       ])
       setSummary(summaryData ?? null)
       setCards(
@@ -208,7 +225,7 @@ export function AIDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [hours, providerType, recordPage])
+  }, [hours, providerType, recordPage, selectedEndpointId, recordStatus])
 
   useEffect(() => {
     load().catch(() => undefined)
@@ -218,20 +235,39 @@ export function AIDashboardPage() {
     return () => window.clearInterval(timer)
   }, [load])
 
+  const filteredCards = useMemo(() => {
+    const keyword = providerNameQuery.trim().toLowerCase()
+    return cards.filter((card) => {
+      if (providerStatus && normalizeProviderStatus(card.current_status) !== providerStatus) return false
+      if (!keyword) return true
+      return card.provider_name.toLowerCase().includes(keyword)
+    })
+  }, [cards, providerNameQuery, providerStatus])
+
+  const filteredSummary = useMemo(() => {
+    if (!cards.length) return summary
+    const total = filteredCards.length
+    const healthy = filteredCards.filter((card) => normalizeProviderStatus(card.current_status) === 'normal').length
+    const unhealthy = filteredCards.filter((card) => normalizeProviderStatus(card.current_status) === 'abnormal').length
+    const unknown = Math.max(0, total - healthy - unhealthy)
+    const health_rate = total ? healthy / total : 0
+    return { total, healthy, unhealthy, unknown, health_rate }
+  }, [cards.length, filteredCards, summary])
+
   const summaryCards = useMemo(
     () => [
-      { title: '总数', value: summary?.total ?? null, decimals: 0, suffix: '' },
-      { title: '正常', value: summary?.healthy ?? null, decimals: 0, suffix: '' },
-      { title: '异常', value: summary?.unhealthy ?? null, decimals: 0, suffix: '' },
-      { title: '未知', value: summary?.unknown ?? null, decimals: 0, suffix: '' },
+      { title: '总数', value: filteredSummary?.total ?? null, decimals: 0, suffix: '' },
+      { title: '正常', value: filteredSummary?.healthy ?? null, decimals: 0, suffix: '' },
+      { title: '异常', value: filteredSummary?.unhealthy ?? null, decimals: 0, suffix: '' },
+      { title: '未知', value: filteredSummary?.unknown ?? null, decimals: 0, suffix: '' },
       {
         title: '健康率',
-        value: summary ? summary.health_rate * 100 : null,
+        value: filteredSummary ? filteredSummary.health_rate * 100 : null,
         decimals: 1,
         suffix: '%',
       },
     ],
-    [summary],
+    [filteredSummary],
   )
 
   const totalRecordPages = useMemo(() => Math.max(1, Math.ceil(recordTotal / recordPageSize)), [recordPageSize, recordTotal])
@@ -260,6 +296,25 @@ export function AIDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="flex h-8 min-w-32 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            value={providerStatus}
+            onChange={(event) => setProviderStatus(event.target.value as typeof providerStatus)}
+          >
+            {providerStatusOptions.map((item) => (
+              <option key={item.value || 'all'} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+
+          <Input
+            value={providerNameQuery}
+            onChange={(event) => setProviderNameQuery(event.target.value)}
+            placeholder="名称搜索"
+            className="h-8 w-56"
+          />
+
           <select
             className="flex h-8 min-w-32 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             value={providerType}
@@ -314,7 +369,7 @@ export function AIDashboardPage() {
                       value={item.value}
                       decimals={item.decimals}
                       suffix={item.suffix}
-                      className={isHealthRate && summary ? healthRateColor(summary.health_rate) : ''}
+                      className={isHealthRate && filteredSummary ? healthRateColor(filteredSummary.health_rate) : ''}
                     />
                   </CardTitle>
                 </div>
@@ -329,71 +384,102 @@ export function AIDashboardPage() {
           加载中...
         </div>
       ) : cards.length ? (
-        <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
-          {cards.map((card) => {
-            const probes = Array.isArray(card.probes) ? card.probes : []
-            const lineValues = probes
-              .map((probe) => probe.avg_response_time_ms)
-              .filter((value): value is number => value != null)
-            const sparklinePath = buildSparklinePath(lineValues)
-            const sparklineAreaPath = buildSparklineAreaPath(lineValues)
-            const sparklineStroke = card.current_status === 'abnormal' ? 'rgb(239 68 68)' : 'rgb(0 180 216)'
-            const sparklineFill = card.current_status === 'abnormal' ? 'rgba(239,68,68,0.15)' : 'rgba(0,180,216,0.15)'
+        filteredCards.length ? (
+          <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
+            {filteredCards.map((card) => {
+              const probes = Array.isArray(card.probes) ? card.probes : []
+              const lineValues = probes
+                .map((probe) => probe.avg_response_time_ms)
+                .filter((value): value is number => value != null)
+              const sparklinePath = buildSparklinePath(lineValues)
+              const sparklineAreaPath = buildSparklineAreaPath(lineValues)
+              const sparklineStroke = card.current_status === 'abnormal' ? 'rgb(239 68 68)' : 'rgb(0 180 216)'
+              const sparklineFill = card.current_status === 'abnormal' ? 'rgba(239,68,68,0.15)' : 'rgba(0,180,216,0.15)'
+              const isSelected = selectedEndpointId != null && card.endpoint_id === selectedEndpointId
+              const canSelect = card.endpoint_id != null
 
-            return (
-              <div key={card.provider_id} className="overflow-hidden rounded-lg border border-border/60 bg-card px-3 py-3">
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-[13px] font-semibold text-foreground">{card.provider_name}</p>
+              return (
+                <div
+                  key={card.provider_id}
+                  role="button"
+                  tabIndex={0}
+                  className={`overflow-hidden rounded-lg border bg-card px-3 py-3 transition-all ${
+                    isSelected ? 'border-primary ring-1 ring-primary' : 'border-border/60'
+                  } ${canSelect ? 'cursor-pointer hover:border-primary/50' : 'opacity-80'}`}
+                  onClick={() => {
+                    if (!canSelect) return
+                    setSelectedEndpointId(isSelected ? null : card.endpoint_id)
+                    setRecordPage(1)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      if (!canSelect) return
+                      setSelectedEndpointId(isSelected ? null : card.endpoint_id)
+                      setRecordPage(1)
+                    }
+                  }}
+                >
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-semibold text-foreground">{card.provider_name}</p>
+                    </div>
+                    <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${providerStatusBadgeClass(card.current_status)}`}>
+                      <span className="size-1.5 rounded-full bg-current" />
+                      {statusLabel(card.current_status)}
+                    </span>
                   </div>
-                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${providerStatusBadgeClass(card.current_status)}`}>
-                    <span className="size-1.5 rounded-full bg-current" />
-                    {statusLabel(card.current_status)}
-                  </span>
-                </div>
-                <div className="mb-2 truncate text-[11px] text-muted-foreground">
-                  {card.provider_type} · {card.model}
-                </div>
+                  <div className="mb-2 truncate text-[11px] text-muted-foreground">
+                    {card.provider_type} · {card.model}
+                  </div>
 
-                <div className="mb-1.5 flex gap-0.5">
-                  {probes.map((probe, index) => (
-                    <div
-                      key={`${card.provider_id}-${index}-${probe.timestamp}`}
-                      className={`h-3.5 min-w-0 flex-1 rounded-[2px] ${probeFillBackground(probe.value)}`}
-                      title={`${probe.timestamp} · ${probe.value === 1 ? '正常' : probe.value === 0 ? '异常' : '无数据'}${probe.avg_response_time_ms != null ? ` · ${probe.avg_response_time_ms.toFixed(0)}ms` : ''}`}
-                    />
-                  ))}
-                </div>
-
-                <div className="mb-2 h-12">
-                  {sparklinePath ? (
-                    <svg className="h-full w-full" viewBox="0 0 100 36" preserveAspectRatio="none">
-                      <path d={sparklineAreaPath} fill={sparklineFill} />
-                      <path
-                        d={sparklinePath}
-                        fill="none"
-                        stroke={sparklineStroke}
-                        strokeWidth="1.5"
-                        vectorEffect="non-scaling-stroke"
+                  <div className="mb-1.5 flex gap-0.5">
+                    {probes.map((probe, index) => (
+                      <div
+                        key={`${card.provider_id}-${index}-${probe.timestamp}`}
+                        className={`h-3.5 min-w-0 flex-1 rounded-[2px] ${probeFillBackground(probe.value)}`}
+                        title={`${probe.timestamp} · ${probe.value === 1 ? '正常' : probe.value === 0 ? '异常' : '无数据'}${probe.avg_response_time_ms != null ? ` · ${probe.avg_response_time_ms.toFixed(0)}ms` : ''}`}
                       />
-                    </svg>
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-[11px] text-muted-foreground">暂无延迟曲线</div>
-                  )}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="flex items-center justify-between text-[11px]">
-                  <p className="text-muted-foreground">
-                    可用 <span className={`text-[13px] font-semibold ${availabilityValueColor(card.availability_rate)}`}>{formatAvailability(card.availability_rate)}</span>
-                  </p>
-                  <p className="text-muted-foreground">
-                    延迟 <span className="text-[13px] font-semibold text-foreground">{formatLatency(card.avg_response_time_ms)}</span>
-                  </p>
+                  <div className="mb-2 h-12">
+                    {sparklinePath ? (
+                      <svg className="h-full w-full" viewBox="0 0 100 36" preserveAspectRatio="none">
+                        <path d={sparklineAreaPath} fill={sparklineFill} />
+                        <path
+                          d={sparklinePath}
+                          fill="none"
+                          stroke={sparklineStroke}
+                          strokeWidth="1.5"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[11px] text-muted-foreground">暂无延迟曲线</div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px]">
+                    <p className="text-muted-foreground">
+                      可用{' '}
+                      <span className={`text-[13px] font-semibold ${availabilityValueColor(card.availability_rate)}`}>
+                        {formatAvailability(card.availability_rate)}
+                      </span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      延迟 <span className="text-[13px] font-semibold text-foreground">{formatLatency(card.avg_response_time_ms)}</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
+            暂无匹配的供应商
+          </div>
+        )
       ) : (
         <div className="rounded-xl border border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
           暂无供应商数据
@@ -402,8 +488,34 @@ export function AIDashboardPage() {
 
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between px-4 py-3">
-          <CardTitle className="text-sm">日志</CardTitle>
+          <div className="flex items-center gap-3">
+            <CardTitle className="text-sm">日志</CardTitle>
+            {selectedEndpointId != null && (
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-secondary/80"
+                onClick={() => {
+                  setSelectedEndpointId(null)
+                  setRecordPage(1)
+                }}
+              >
+                已筛选供应商端点 <span className="ml-1 text-muted-foreground">✕</span>
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
+            <select
+              className="flex h-8 min-w-28 rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              value={recordStatus}
+              onChange={(event) => {
+                setRecordStatus(event.target.value as typeof recordStatus)
+                setRecordPage(1)
+              }}
+            >
+              <option value="">全部状态</option>
+              <option value="200">成功 (200)</option>
+              <option value="non200">失败 (非200)</option>
+            </select>
             <span className="text-xs text-muted-foreground">
               第 {recordPage} / {totalRecordPages} 页，共 {recordTotal} 条
             </span>
@@ -423,7 +535,7 @@ export function AIDashboardPage() {
             >
               下一页
             </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate('/records')}>
+            <Button size="sm" variant="outline" onClick={() => navigate(selectedEndpointId ? `/records?endpointId=${selectedEndpointId}` : '/records')}>
               全部日志
             </Button>
           </div>
@@ -519,17 +631,24 @@ export function AIDashboardPage() {
                 </div>
 
                 {detail.error_message ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200 whitespace-pre-wrap break-words">
                     {detail.error_message}
                   </div>
                 ) : null}
 
-                <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-                  <p className="text-xs text-muted-foreground">响应内容</p>
-                  <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap break-words text-sm text-foreground">
-                    {prettyBody(detail.response_body) || '无响应内容'}
-                  </pre>
-                </div>
+                {detail.response_body ? (
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                    <p className="text-xs text-muted-foreground">响应内容</p>
+                    <pre className="mt-3 max-h-[420px] overflow-auto whitespace-pre-wrap break-words text-sm text-foreground">
+                      {prettyBody(detail.response_body)}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                    <p className="text-xs text-muted-foreground">响应内容</p>
+                    <p className="mt-3 text-sm text-muted-foreground">无响应内容</p>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

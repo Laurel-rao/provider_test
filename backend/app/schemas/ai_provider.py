@@ -117,6 +117,7 @@ class ProbePoint(BaseModel):
 
 class ProviderProbeCard(BaseModel):
     provider_id: int
+    endpoint_id: Optional[int] = None
     provider_name: str
     provider_type: str
     model: str

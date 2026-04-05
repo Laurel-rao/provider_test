@@ -511,6 +511,7 @@ class AIProviderService:
 
             cards.append({
                 "provider_id": p.id,
+                "endpoint_id": p.endpoint_id,
                 "provider_name": p.name,
                 "provider_type": p.provider_type,
                 "model": p.model,

@@ -14,6 +14,7 @@ def _make_provider() -> SimpleNamespace:
         id=1,
         name="OpenAI",
         provider_type="openai",
+        stream=False,
         endpoint_id=10,
         endpoint=SimpleNamespace(
             id=10,

@@ -174,6 +174,7 @@ type ProbePoint = {
 
 type ProviderProbeCard = {
   provider_id: number
+  endpoint_id: number | null
   provider_name: string
   provider_type: string
   model: string
